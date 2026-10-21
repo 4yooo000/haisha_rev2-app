@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>配車代計算アプリ</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Hiragino Sans", "Meiryo", sans-serif;
+    background:#f2f5f8; margin:0; padding:0;
+    padding-bottom:80px;
+    font-size:16px; color:#333;
+  }
+  h1 {
+    text-align:center; color:#fff; background:#2980b9;
+    margin:0; padding:16px 10px; font-size:20px;
+    position:sticky; top:0; z-index:10;
+    box-shadow:0 2px 4px rgba(0,0,0,0.15);
+  }
+  .container { padding:12px; }
+  .formula-box {
+    background:#eef6fc; border-left:5px solid #2980b9; padding:12px;
+    border-radius:10px; margin-bottom:14px; font-size:13px; line-height:1.7;
+  }
+  .formula-box strong { display:block; margin-bottom:4px; color:#2c3e50; font-size:14px; }
+  .formula-main {
+    background:#fff; border-radius:8px; padding:8px 10px; margin-bottom:10px;
+    font-weight:bold; color:#2c3e50;
+  }
+
+  .car-card {
+    background:#fff; border-radius:14px; padding:16px; margin-bottom:16px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.08);
+  }
+  .car-card-header {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:10px;
+  }
+  .car-card-header h2 { margin:0; font-size:17px; color:#2c3e50; }
+
+  .remove-btn {
+    background:#e74c3c; color:#fff; border:none;
+    padding:8px 14px; border-radius:8px; font-size:13px;
+  }
+
+  label {
+    display:block; margin-top:14px; font-size:13px; color:#555; font-weight:bold;
+  }
+  .note { font-size:11px; color:#e67e22; font-weight:normal; display:block; margin-top:2px; }
+
+  input, select {
+    width:100%; padding:12px; margin-top:4px;
+    border:1px solid #ccc; border-radius:8px;
+    font-size:16px;
+    -webkit-appearance:none;
+  }
+  input:focus, select:focus {
+    outline:none; border-color:#2980b9; box-shadow:0 0 0 2px rgba(41,128,185,0.2);
+  }
+
+  .distance-btn {
+    margin-top:10px; background:#27ae60; color:#fff; border:none;
+    padding:14px; border-radius:10px; font-size:15px; width:100%;
+    font-weight:bold;
+  }
+  .distance-btn:active { background:#1e8449; }
+
+  .distance-result {
+    margin-top:8px; font-size:13px; color:#2c3e50; background:#eafaf1;
+    padding:10px; border-radius:8px; line-height:1.5;
+  }
+
+  .result {
+    margin-top:14px; background:#f7fcf9; border:1px solid #d3f0dd;
+    padding:12px; border-radius:10px; font-size:14px; line-height:2;
+  }
+  .result .total {
+    font-size:18px; font-weight:bold; color:#27ae60;
+    display:block; margin:6px 0;
+  }
+  .result .per-player {
+    font-size:16px; font-weight:bold; color:#e67e22;
+    display:block; margin:6px 0;
+  }
+  .result .formula-line {
+    font-size:12px; color:#777; display:block; margin-top:4px;
+  }
+
+  .player-list { margin-top:8px; display:flex; flex-wrap:wrap; gap:6px; }
+  .player-item {
+    background:#3498db; color:#fff; padding:6px 10px;
+    border-radius:16px; font-size:13px;
+  }
+
+  #addCarBtn {
+    display:block; width:100%; margin:10px 0; padding:14px;
+    font-size:16px; font-weight:bold;
+    background:#fff; color:#2980b9; border:2px dashed #2980b9;
+    border-radius:12px;
+  }
+
+  .footer-bar {
+    position:fixed; bottom:0; left:0; right:0;
+    background:#fff; padding:10px 14px;
+    box-shadow:0 -2px 8px rgba(0,0,0,0.1);
+    z-index:20;
+  }
+  #calcAllBtn {
+    display:block; width:100%; padding:16px;
+    font-size:17px; font-weight:bold;
+    background:#2980b9; color:#fff; border:none; border-radius:12px;
+  }
+  #calcAllBtn:active { background:#20638f; }
+
+  #summary {
+    background:#fff8e6; padding:14px; border-radius:14px; margin-top:16px;
+    border:1px solid #f7d98b;
+  }
+  #summary h2 { font-size:17px; color:#b9770e; margin-top:0; }
+  #summary h3 { font-size:14px; color:#8a5a00; margin:16px 0 8px; }
+
+  .summary-card {
+    background:#fff; border-radius:10px; padding:12px; margin-bottom:10px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.08); font-size:14px; line-height:1.8;
+  }
+  .summary-card .name { font-weight:bold; color:#2c3e50; }
+  .summary-card .amount { color:#27ae60; font-weight:bold; }
+
+  .player-summary-row {
+    display:flex; justify-content:space-between;
+    background:#fff; padding:10px 14px; border-radius:10px; margin-bottom:8px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.08); font-size:14px;
+  }
+  .player-summary-row .amount { color:#e67e22; font-weight:bold; }
+
+  .grand-total {
+    text-align:center; font-size:20px; font-weight:bold; color:#c0392b;
+    background:#fff; padding:16px; border-radius:12px; margin-top:14px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.1);
+  }
+
+  .caution-text {
+    font-size:12px; color:#8a5a00; margin-top:10px; line-height:1.7;
+  }
+</style>
+</head>
+<body>
+
+<h1>⚽ 配車代計算アプリ</h1>
+
+<div class="container">
+
+  <div class="formula-box">
+    <strong>📐 計算式（一人当たり）</strong>
+    <div class="formula-main">
+      （往復距離 ÷ 燃費 × ガソリン代 ＋ 車両経費 ＋ 他経費）÷ 乗車選手人数
+    </div>
+    ・燃費：7km/L（固定）<br>
+    ・車両経費：配車1台につき500円<br>
+    ・他経費：駐車場代、高速代<br>
+    ・乗車選手人数：コーチは含めません<br><br>
+    <strong>📌 補足</strong>
+    ・ガソリン代は月初にLINEで共有された金額を入力<br>
+    ・駐車場代／高速代は後日領収書を当番へ提出し精算<br>
+    ・コーチが同乗しても車両経費は増えず、人数にも含めません
+  </div>
+
+  <div id="carContainer"></div>
+
+  <button id="addCarBtn">＋ 配車を追加</button>
+
+  <div id="summary" style="display:none;">
+    <h2>📊 集計結果</h2>
+    <div id="summaryContent"></div>
+  </div>
+
+</div>
+
+<div class="footer-bar">
+  <button id="calcAllBtn">💰 計算する</button>
+</div>
+
+<script>
+let carCount = 0;
+
+// 車両経費（1台あたり）
+const CAR_EXPENSE_PER_VEHICLE = 500;
+
+// XSS対策：入力文字をエスケープ
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function addCar() {
+  carCount++;
+  const id = carCount;
+  const container = document.getElementById('carContainer');
+  const div = document.createElement('div');
+  div.className = 'car-card';
+  div.id = `car-${id}`;
+  div.innerHTML = `
+    <div class="car-card-header">
+      <h2>🚗 配車 #${id}</h2>
+      <button class="remove-btn" onclick="removeCar(${id})">削除</button>
+    </div>
+
+    <label>運転手名</label>
+    <input type="text" id="driver-${id}" placeholder="例：山田">
+
+    <label>出発地（任意）</label>
+    <input type="text" id="origin-${id}" placeholder="例：〇〇小学校">
+
+    <label>目的地</label>
+    <input type="text" id="destination-${id}" placeholder="例：△△グラウンド">
+
+    <button class="distance-btn" onclick="openGoogleMaps(${id})">🗺️ Googleマップで経路を確認</button>
+    <div class="distance-result">👉 表示された片道距離を下に入力してください</div>
+
+    <label>片道距離 (km)</label>
+    <input type="number" inputmode="decimal" id="distance-${id}" placeholder="例：12.5">
+
+    <label>燃費 (km/L)<span class="note">固定値：7km/L（変更可）</span></label>
+    <input type="number" inputmode="decimal" id="fuelEfficiency-${id}" value="7">
+
+    <label>ガソリン代 (円/L)<span class="note">月初にLINEで共有された金額を入力</span></label>
+    <input type="number" inputmode="numeric" id="fuelPrice-${id}" placeholder="例：170">
+
+    <label>車両経費（1台あたり・円）<span class="note">配車を出せば1台につき500円（コーチ同乗でも増えません）</span></label>
+    <input type="number" inputmode="numeric" id="carExpense-${id}" value="${CAR_EXPENSE_PER_VEHICLE}">
+
+    <label>他経費（駐車場代・高速代）<span class="note">後日領収書を当番へ提出し精算</span></label>
+    <input type="number" inputmode="numeric" id="otherExpense-${id}" placeholder="例：500">
+
+    <label>乗車選手名（カンマ区切り）<span class="note">コーチは入力しないでください（人数に含めません）</span></label>
+    <input type="text" id="players-${id}" placeholder="例：佐藤,鈴木,田中">
+
+    <div class="result" id="result-${id}"></div>
+  `;
+  container.appendChild(div);
+  div.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function removeCar(id) {
+  const el = document.getElementById(`car-${id}`);
+  if (el) el.remove();
+}
+
+function openGoogleMaps(id) {
+  const origin = document.getElementById(`origin-${id}`).value.trim();
+  const destination = document.getElementById(`destination-${id}`).value.trim();
+
+  if (!destination) {
+    alert("目的地を入力してください");
+    return;
+  }
+
+  let url = "https://www.google.com/maps/dir/?api=1";
+  url += "&destination=" + encodeURIComponent(destination);
+  if (origin) {
+    url += "&origin=" + encodeURIComponent(origin);
+  }
+  url += "&travelmode=driving";
+
+  window.open(url, "_blank");
+}
+
+function calcAll() {
+  const container = document.getElementById('carContainer');
+  const cars = container.querySelectorAll('.car-card');
+  let totalAll = 0;
+  let playerPayments = {};
+  let summaryCards = "";
+
+  cars.forEach(car => {
+    const id = car.id.split('-')[1];
+    const driver = escapeHtml(document.getElementById(`driver-${id}`).value || `運転手${id}`);
+    const distance = parseFloat(document.getElementById(`distance-${id}`).value) || 0;
+    const fuelEfficiency = parseFloat(document.getElementById(`fuelEfficiency-${id}`).value) || 7;
+    const fuelPrice = parseFloat(document.getElementById(`fuelPrice-${id}`).value) || 0;
+    const carExpense = parseFloat(document.getElementById(`carExpense-${id}`).value) || 0;
+    const otherExpense = parseFloat(document.getElementById(`otherExpense-${id}`).value) || 0;
+    const playersRaw = document.getElementById(`players-${id}`).value || "";
+    const players = playersRaw.split(',').map(p => p.trim()).filter(p => p);
+
+    // 乗車選手人数（コーチは含めない）
+    const numPlayers = players.length || 1;
+
+    // ===== 計算式 =====
+    // 一人当たり = (往復距離÷燃費×ガソリン代 ＋ 車両経費(1台分) ＋ 他経費) ÷ 乗車選手人数
+    const roundTrip = distance * 2;
+    const gasCost = (roundTrip / fuelEfficiency) * fuelPrice;
+    const total = gasCost + carExpense + otherExpense;   // 配車1台分の合計
+    const perPlayer = total / numPlayers;                 // 一人当たり
+
+    totalAll += total;
+
+    let playerListHtml = players.map(p => {
+      playerPayments[p] = (playerPayments[p] || 0) + perPlayer;
+      return `<span class="player-item">${escapeHtml(p)}：${perPlayer.toFixed(0)}円</span>`;
+    }).join("");
+
+    document.getElementById(`result-${id}`).innerHTML = `
+      運転手：<strong>${driver}</strong><br>
+      片道 ${distance.toFixed(1)}km（往復 ${roundTrip.toFixed(1)}km）<br>
+      ガソリン代：${gasCost.toFixed(0)}円 ／ 車両経費：${carExpense.toFixed(0)}円 ／ 他経費：${otherExpense.toFixed(0)}円
+      <span class="total">配車合計：${total.toFixed(0)} 円</span>
+      <span class="per-player">1人あたり：${perPlayer.toFixed(0)} 円（選手${numPlayers}人）</span>
+      <span class="formula-line">
+        （${gasCost.toFixed(0)} ＋ ${carExpense.toFixed(0)} ＋ ${otherExpense.toFixed(0)}）÷ ${numPlayers}人 ＝ ${perPlayer.toFixed(0)}円
+      </span>
+      <div class="player-list">${playerListHtml}</div>
+    `;
+
+    summaryCards += `
+      <div class="summary-card">
+        <span class="name">🚗 ${driver}</span><br>
+        乗車選手：${players.map(escapeHtml).join('、') || 'なし'}<br>
+        配車合計：<span class="amount">${total.toFixed(0)}円</span>　
+        1人あたり：<span class="amount">${perPlayer.toFixed(0)}円</span>
+      </div>
+    `;
+  });
+
+  let playerSummaryHtml = "";
+  for (const [player, amount] of Object.entries(playerPayments)) {
+    playerSummaryHtml += `
+      <div class="player-summary-row">
+        <span>${escapeHtml(player)}</span>
+        <span class="amount">${amount.toFixed(0)}円</span>
+      </div>
+    `;
+  }
+
+  document.getElementById('summaryContent').innerHTML = `
+    <h3>配車ごとの内訳</h3>
+    ${summaryCards}
+
+    <h3>選手ごとの合計負担額</h3>
+    ${playerSummaryHtml}
+
+    <div class="grand-total">💴 全体合計：${totalAll.toFixed(0)} 円</div>
+
+    <p class="caution-text">
+      ※駐車場代・高速代は後日領収書を当番へ提出し精算してください。<br>
+      ※ガソリン代は月初にLINEグループで共有された金額を使用しています。<br>
+      ※コーチは乗車人数に含めていません。
+    </p>
+  `;
+  document.getElementById('summary').style.display = 'block';
+  document.getElementById('summary').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.getElementById('addCarBtn').addEventListener('click', addCar);
+document.getElementById('calcAllBtn').addEventListener('click', calcAll);
+
+window.onload = function() {
+  addCar();
+};
+</script>
+
+</body>
+</html>
